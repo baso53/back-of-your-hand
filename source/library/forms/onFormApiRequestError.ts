@@ -8,7 +8,6 @@
  */
 
 import { ClientRequestError } from "../../api/requestApi";
-import { reportError } from "../../utilities/setUpErrorReporting";
 import type yup from "./yup";
 import type { createForm } from "felte";
 import * as sveleteStore from "svelte/store";
@@ -37,8 +36,6 @@ export default function onFormApiRequestError<TSchema extends Schema>(
     errorMessages: string[],
   ) => boolean = () => true,
 ): string[] {
-  reportError(error);
-
   const errorMessages: string[] = [];
   const fieldNames = Object.keys(sveleteStore.get(form.data));
 

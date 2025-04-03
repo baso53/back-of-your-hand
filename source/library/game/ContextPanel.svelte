@@ -36,6 +36,7 @@
   import Button from "../forms/Button.svelte";
   import combineClasses from "../utilities/combineClasses";
   import prettifyDistance from "../utilities/prettifyDistance";
+  import { addExclusion } from "../../utilities/exclusions";
 
   export let areSettingsShown = writable(false);
   export let resetGame: () => void;
@@ -47,6 +48,13 @@
 
   const onChosenPointConfirmed = () => {
     isChosenPointConfirmed.set(true);
+  };
+
+  const onAddExclusion = () => {
+    if ($currentQuestion?.target.name) {
+      addExclusion({ name: $currentQuestion.target.name.toLowerCase() });
+    }
+    onNextClicked();
   };
 
   const onNextClicked = () => {
@@ -293,6 +301,13 @@
               variant="primary"
             >
               Next
+            </Button>
+            <Button
+              class="button--primary"
+              on:click={onAddExclusion}
+              variant="primary"
+            >
+              Exclude for Future
             </Button>
           {:else}
             <Button

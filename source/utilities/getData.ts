@@ -7,23 +7,21 @@
  * Copyright © 2024 Adam Lynch (https://adamlynch.com)
  */
 
-import convertOverpassLatLngtoLatLng from "./convertOverpassLatLngtoLatLng";
-import getRandomItem from "./getRandomItem";
-import ignoreError from "./ignoreError";
-import exclusions from "./exclusions";
-import isElementAnEnclosedArea from "./isElementAnEnclosedArea";
-import getNamesFromElement from "./getNamesFromElement";
-import type { Overpass, Question } from "../library/game/types";
-import { Difficulty } from "../library/game/types";
-import type { AreaSelection } from "./store";
 import api from "../api";
 import type { AreaOverpassData } from "../api/resourceObjects";
+import type { Overpass, Question } from "../library/game/types";
+import { Difficulty, PresetAreaShape } from "../library/game/types";
 import capLng from "./capLng";
-import { PresetAreaShape } from "../library/game/types";
-import getCenterOfFeature from "./getCenterOfFeature";
+import convertOverpassLatLngtoLatLng from "./convertOverpassLatLngtoLatLng";
 import convertPositionToLatLng from "./convertPositionToLatLng";
+import { getExclusionsFromLocalStorage } from "./exclusions";
 import getBboxOfFeature from "./getBboxOfFeature";
-import { reportError } from "./setUpErrorReporting";
+import getCenterOfFeature from "./getCenterOfFeature";
+import getNamesFromElement from "./getNamesFromElement";
+import getRandomItem from "./getRandomItem";
+import ignoreError from "./ignoreError";
+import isElementAnEnclosedArea from "./isElementAnEnclosedArea";
+import type { AreaSelection } from "./store";
 
 const difficultiesToHighwayCategories: {
   [difficulty: string]: string[];
@@ -116,7 +114,6 @@ const load = async ({ areaSelection }: { areaSelection: AreaSelection }) => {
           error,
         },
       );
-      reportError(error);
     }
   }
 
@@ -257,7 +254,9 @@ export default async ({
     areaSelection,
   })) as Overpass.Response;
 
-  const results = [];
+  const results = new Set<Overpass.Element>();
+
+  const exclusions = getExclusionsFromLocalStorage();
 
   // Pot for drawing streets from.
   const pot: { [key: string]: Overpass.Element } = {};
@@ -294,9 +293,10 @@ export default async ({
     pot[key] = element;
   }
 
-  for (let i = 0; i < numberOfQuestions; i++) {
+  while (results.size < numberOfQuestions) {
     // Pick a random street from the pot.
-    const key = getRandomItem(Object.keys(pot), getRandomNumber);
+    const keysArray = Object.keys(pot);
+    const key = getRandomItem(keysArray, getRandomNumber);
 
     /*
       This will happen if there are less than the desired amount of (uniquely named) streets in the area.
@@ -307,12 +307,14 @@ export default async ({
     }
 
     // Add the street to the results.
-    results.push(pot[key]);
+    results.add(pot[key]);
 
     // Remove the street from the pot.
     delete pot[key];
   }
 
-  // Convert to our type, join with other streets of the same name, etc.
-  return results.map((result) => adjustStreetDetails(result, elements));
+  // Convert Set to Array and to our type, join with other streets of the same name, etc.
+  return Array.from(results).map((result) =>
+    adjustStreetDetails(result, elements),
+  );
 };

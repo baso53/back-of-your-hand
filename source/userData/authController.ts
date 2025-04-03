@@ -10,15 +10,14 @@
 import * as dateFns from "date-fns";
 import pick from "lodash/pick";
 
+import { navigate } from "svelte-routing";
+import * as svelteStore from "svelte/store";
 import api from "../api";
 import * as JSONAPI from "../api/JSONAPI";
+import getInternalRoutes from "../library/routing/getInternalRoutes";
+import eventEmitter from "../utilities/eventEmitter";
 import * as store from "./store";
 import * as storeActions from "./storeActions";
-import eventEmitter from "../utilities/eventEmitter";
-import * as svelteStore from "svelte/store";
-import { navigate } from "svelte-routing";
-import getInternalRoutes from "../library/routing/getInternalRoutes";
-import { reportError } from "../utilities/setUpErrorReporting";
 
 async function getValidAccessToken(options: {
   shouldRefreshAccessTokenIfExpiring: boolean;
@@ -143,7 +142,6 @@ async function onPreApiFetch(fetchArgs: { url: string; options: RequestInit }) {
       ),
     });
   } catch (error) {
-    reportError(error);
     eventEmitter.emit("lack-of-authentication-detected", {
       functionWhichErrored: "getValidAccessToken",
     });
